@@ -9,7 +9,9 @@ const CreatePage = () => {
     {
       name: "",
       price: "",
-      image: ""
+      image: "",
+      rating: "",
+      review: "",
     });
 
   const { createProduct } = useProductStore();
@@ -17,6 +19,28 @@ const CreatePage = () => {
   const toast = useToast()
 
   const handleAddProduct = async () => {
+
+    if (newProduct.price < 0) {
+      toast({
+        title: 'Invalid Price',
+        description: 'Price must be a positive number.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
+    if (newProduct.rating < 0 || newProduct.rating > 5 || !Number.isInteger(Number(newProduct.rating))) {
+      toast({
+        title: 'Invalid Rating',
+        description: 'Rating must be an integer between 0 and 5.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
+
     const { success, message } = await createProduct(newProduct);
     if (success) {
       toast({
@@ -31,12 +55,12 @@ const CreatePage = () => {
       toast({
         title: 'Error',
         description: message,
-        status: 'success',
+        status: 'error',
         duration: 4000,
         isClosable: true,
       })
     }
-    setNewProduct({ name: "", price: "", image: "" });
+    setNewProduct({ name: "", price: "", image: "", rating: "", review: "" });
   }
   return (
 
@@ -67,11 +91,37 @@ const CreatePage = () => {
             />
 
             <Input
+              placeholder='Review (Otional)'
+              name='review'
+              value={newProduct.review}
+              onChange={(e) => setNewProduct({ ...newProduct, review: e.target.value })}
+            />
+
+            <Input
+              placeholder='Rating Out Of 5'
+              name='rating'
+              type='number'
+              max={5}
+              min={0}
+              value={newProduct.rating}
+              onChange={(e) => {
+                const value = Math.max(0, Math.min(5, Number(e.target.value)));
+                setNewProduct({ ...newProduct, rating: value })
+              }}
+            />
+
+            <Input
               placeholder='Image URL'
               name='image'
               value={newProduct.image}
               onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
             />
+
+            {/* <Input
+              type='file'
+              accept="image/*"
+            /> */}
+
 
             <Button w={'full'} colorScheme='blue' onClick={handleAddProduct}>Add Product</Button>
 

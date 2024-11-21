@@ -9,13 +9,16 @@ import {
 } from '@chakra-ui/react'
 
 
-import { EditIcon, DeleteIcon } from "@chakra-ui/icons"
+import { EditIcon, DeleteIcon, ViewIcon } from "@chakra-ui/icons"
 import React, { useState } from 'react'
 import { useProductStore } from '../store/product'
 
 const ProductCard = ({ product }) => {
 
-    const { isOpen, onOpen, onClose } = useDisclosure()
+    const { isOpen, onOpen, onClose } = useDisclosure();
+
+    const [isProductOpen, setIsProductOpen] = useState(false);
+
 
     const [updatedProduct, setUpdatedProduct] = useState(product);
 
@@ -51,28 +54,58 @@ const ProductCard = ({ product }) => {
     }
 
     const handleUpdate = async (pid, updatedProduct) => {
+        if (updatedProduct.price <= 0) {
+            toast({
+                title: 'Invalid Price',
+                description: 'Price must be a positive number.',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        if (updatedProduct.rating < 0 || updatedProduct.rating > 5 || !Number.isInteger(Number(updatedProduct.rating))) {
+            toast({
+                title: 'Invalid Rating',
+                description: 'Rating must be an integer between 0 and 5.',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+            });
+            return;
+        }
+
         const { success, message } = await updateProduct(pid, updatedProduct);
         onClose();
 
         if (success) {
-
             toast({
                 title: 'Success.',
-                description: "Product updated successfully",
+                description: 'Product updated successfully',
                 status: 'success',
                 duration: 4000,
                 isClosable: true,
-            })
-        }
-        else {
+            });
+        } else {
             toast({
                 title: 'Error',
                 description: message,
                 status: 'error',
                 duration: 4000,
                 isClosable: true,
-            })
+            });
         }
+    };
+
+
+    const onProductOpen = () => {
+        console.log("Modal Opened");
+        setIsProductOpen(true);
+    }
+    const onProductClose = () => {
+        console.log("Modal Closed");
+        setIsProductOpen(false);
     }
 
     return (
@@ -92,16 +125,51 @@ const ProductCard = ({ product }) => {
                 </Heading>
 
                 <Text fontWeight={'bold'} fontSize={'xl'} color={textColor}>
-                ₹{product.price}
+                    ₹{product.price}
                 </Text>
 
+                <Text fontWeight={'bold'} fontSize={'xl'} color={textColor}>
+                    Rating: {"⭐".repeat(product.rating)}
+                </Text>
 
-                <HStack spacing={2}>
+                {
+                    product.review &&
+
+                    <Text fontWeight={'bold'} fontSize={'xl'} color={textColor}>
+                        Review: {product.review.length > 15 ? product.review.substring(0, 15) + "..." : product.review}
+                    </Text>
+                }
+
+
+                <HStack spacing={2} mt={2}>
                     <IconButton icon={<EditIcon />} colorScheme='blue' onClick={onOpen} />
+                    <IconButton icon={<ViewIcon />} colorScheme='blue' onClick={onProductOpen} />
                     <IconButton icon={<DeleteIcon />} colorScheme='red' onClick={() => handleDelete(product._id)} />
                 </HStack>
 
             </Box>
+
+            <Modal isOpen={isProductOpen} onClose={onProductClose} >
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>{product.name}</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <VStack spacing={4} alignItems={"self-start"} >
+                            <Image src={product.image} h={200} objectFit="contain" alignSelf={'center'} />
+                            <Text><strong>Price:</strong> ₹{product.price}</Text>
+                            <Text><strong>Rating:</strong> {"⭐".repeat(product.rating)}</Text>
+
+                            {product.review &&
+                                <Text><strong>Review:</strong> {product.review}</Text>}
+                        </VStack>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant='ghost' onClick={onProductClose}>Close</Button>
+                    </ModalFooter>
+                </ModalContent>
+
+            </Modal>
 
             <Modal isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />
@@ -124,6 +192,27 @@ const ProductCard = ({ product }) => {
                                 type='number'
                                 value={updatedProduct.price}
                                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: e.target.value })}
+                            />
+                            <Input
+                                placeholder='Review (Otional)'
+                                name='review'
+                                value={updatedProduct.review}
+                                onChange={(e) => {
+                                    setUpdatedProduct({ ...updatedProduct, review: e.target.value })
+                                }}
+                            />
+
+                            <Input
+                                placeholder='Rating Out Of 5'
+                                name='rating'
+                                type='number'
+                                max={5}
+                                min={0}
+                                value={updatedProduct.rating}
+                                onChange={(e) => {
+                                    const value = Math.max(0, Math.min(5, Number(e.target.value)));
+                                    setUpdatedProduct({ ...updatedProduct, rating: value })
+                                }}
                             />
 
                             <Input

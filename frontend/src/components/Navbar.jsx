@@ -1,6 +1,6 @@
-import { Container, Flex, Text, HStack, Button, useColorMode } from '@chakra-ui/react';
+import { Container, Flex, Text, HStack, Button, useColorMode, useToast } from '@chakra-ui/react';
 import { MoonIcon, PlusSquareIcon, SunIcon } from '@chakra-ui/icons';
-import { FaSignInAlt, FaUserPlus } from 'react-icons/fa';
+import { FaSignInAlt, FaSignOutAlt, FaUserPlus } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import React from 'react'
@@ -10,6 +10,8 @@ const Navbar = () => {
     const { colorMode, toggleColorMode } = useColorMode();
     const location = useLocation();
     const shouldDisplayLink = location.pathname.endsWith("homePage");
+    const toast=useToast();
+
     return (
         <Container maxW={"1140px"} px={4}>
             <Flex h={16}
@@ -56,6 +58,17 @@ const Navbar = () => {
                         </Button>
                     </Link>
 
+                    <Button onClick={() => {
+                        toast({
+                            title: 'Success.',
+                            description: "User Logged Out",
+                            status: 'success',
+                            duration: 4000,
+                            isClosable: true,
+                        })
+                    }} colorScheme="green" size="md">
+                        <FaSignOutAlt />
+                    </Button>
                 </HStack>
             </Flex>
         </Container>
